@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study OS</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #ffe4e1; /* pastel pink default */
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    padding: 20px;
+    text-align: center;
+    background-color: #fff0f5;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  main {
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+  }
+  input, select, textarea, button {
+    margin: 10px 0;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  #canvas {
+    border: 1px solid #ccc;
+    margin-top: 10px;
+  }
+  .theme-picker {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+  }
+  .theme-picker button {
+    width: 50px;
+    height: 50px;
+    border: none;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Study OS</h1>
+</header>
+
+<main>
+  <h2>Personalize Your Experience</h2>
+  <div class="theme-picker">
+    <button style="background-color:#ffe4e1;" onclick="changeTheme('#ffe4e1')"></button>
+    <button style="background-color:#fffacd;" onclick="changeTheme('#fffacd')"></button>
+    <button style="background-color:#e0ffff;" onclick="changeTheme('#e0ffff')"></button>
+  </div>
+
+  <h2>Create Your Study Plan</h2>
+  <form id="studyForm">
+    <label>What year/level are you?</label>
+    <input type="text" id="level" placeholder="E.g., Year 9">
+
+    <label>Topics you want to study</label>
+    <textarea id="topics" placeholder="E.g., Algebra, Science experiments"></textarea>
+
+    <label>Any questions you want to ask?</label>
+    <textarea id="questions" placeholder="Write your questions here"></textarea>
+
+    <button type="button" onclick="generatePlan()">Generate Study Plan</button>
+  </form>
+
+  <h2>Draw/Take Notes</h2>
+  <canvas id="canvas" width="600" height="300"></canvas>
+  <button onclick="clearCanvas()">Clear Drawing</button>
+
+  <h2>Generated Study Plan</h2>
+  <div id="result"></div>
+</main>
+
+<script>
+function changeTheme(color) {
+  document.body.style.backgroundColor = color;
+}
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+
+canvas.addEventListener('mousedown', () => drawing = true);
+canvas.addEventListener('mouseup', () => drawing = false);
+canvas.addEventListener('mousemove', draw);
+
+function draw(e) {
+  if(!drawing) return;
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#333';
+  ctx.lineTo(e.offsetX, e.offsetY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(e.offsetX, e.offsetY);
+}
+
+function clearCanvas() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+async function generatePlan() {
+  const level = document.getElementById('level').value;
+  const topics = document.getElementById('topics').value;
+  const questions = document.getElementById('questions').value;
+
+  const responseDiv = document.getElementById('result');
+  responseDiv.innerHTML = 'Generating plan...';
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({level, topics, questions})
+    });
+
+    const data = await res.json();
+    responseDiv.innerHTML = `<pre>${data.plan}</pre>`;
+  } catch(e) {
+    responseDiv.innerHTML = 'Error generating plan. Make sure your API key is set.';
+  }
+}
+</script>
+
+</body>
+</html>
